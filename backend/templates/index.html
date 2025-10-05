@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NASA Exoplanet Prediction</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --deep-space: #0a0e1a;
+      --space-blue: #131b2e;
+      --card-bg: #1a2332;
+      --section-bg: #222d42;
+      --border: #3d4b66;
+      --text-primary: #e8f0ff;
+      --text-secondary: #a8b8d8;
+      --text-hint: #6b7a99;
+      --accent-cyan: #4fc3f7;
+      --accent-blue: #2979ff;
+      --success: #4caf50;
+      --warning: #ff5252;
+      --input-bg: #2a3649;
+      --input-focus: #3d4f6b;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--deep-space);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Animated starfield with moving stars [web:188][web:200] */
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* Layer 1: Small drifting stars */
+    body::before {
+      background-image: 
+        radial-gradient(1px 1px at 20% 30%, white, transparent),
+        radial-gradient(1px 1px at 60% 70%, white, transparent),
+        radial-gradient(2px 2px at 50% 50%, white, transparent),
+        radial-gradient(1px 1px at 80% 10%, white, transparent),
+        radial-gradient(1px 1px at 90% 60%, white, transparent),
+        radial-gradient(1.5px 1.5px at 30% 80%, rgba(255,255,255,0.8), transparent);
+      background-size: 500px 500px, 600px 600px, 700px 700px, 400px 400px, 550px 550px, 650px 650px;
+      opacity: 0.5;
+      animation: driftStars 120s linear infinite;
+    }
+
+    /* Layer 2: Larger twinkling stars */
+    body::after {
+      background-image: 
+        radial-gradient(2px 2px at 15% 25%, rgba(79, 195, 247, 0.8), transparent),
+        radial-gradient(2px 2px at 85% 75%, rgba(155, 92, 255, 0.7), transparent),
+        radial-gradient(1.5px 1.5px at 45% 60%, rgba(255, 255, 255, 0.9), transparent);
+      background-size: 800px 800px, 900px 900px, 700px 700px;
+      opacity: 0.6;
+      animation: twinkle 4s ease-in-out infinite;
+    }
+
+    @keyframes driftStars {
+      from { transform: translate(0, 0); }
+      to { transform: translate(-100px, -100px); }
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 0.3; }
+    }
+
+    /* Container fade-in animation on page load [web:184][web:185] */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.5),
+        0 0 60px rgba(79, 195, 247, 0.1);
+      animation: fadeInUp 0.8s ease-out;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Header with pulsing accent glow [web:182][web:190] */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid var(--border);
+      animation: fadeIn 1s ease-out 0.2s both;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    h1 {
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      font-size: 2rem;
+      display: inline-block;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+      margin-top: 6px;
+    }
+
+    /* Section headers with slide-in animation [web:184][web:190] */
+    .section {
+      margin-bottom: 28px;
+      animation: slideInLeft 0.6s ease-out both;
+    }
+
+    .section:nth-child(1) { animation-delay: 0.1s; }
+    .section:nth-child(2) { animation-delay: 0.2s; }
+    .section:nth-child(3) { animation-delay: 0.3s; }
+    .section:nth-child(4) { animation-delay: 0.4s; }
+    .section:nth-child(5) { animation-delay: 0.5s; }
+    .section:nth-child(6) { animation-delay: 0.6s; }
+
+    @keyframes slideInLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      margin-bottom: 16px;
+      background: var(--section-bg);
+      border-left: 3px solid var(--accent-cyan);
+      border-radius: 4px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle glow pulse animation [web:182][web:190] */
+    .section-header::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      width: 3px;
+      height: 100%;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 10px var(--accent-cyan);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 10px var(--accent-cyan); }
+      50% { opacity: 0.6; box-shadow: 0 0 20px var(--accent-cyan); }
+    }
+
+    .section-header:hover {
+      background: rgba(34, 45, 66, 0.8);
+      transform: translateX(4px);
+    }
+
+    .section-icon {
+      font-size: 1.2rem;
+      animation: rotate 20s linear infinite;
+    }
+
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Grid with staggered fade-in [web:184][web:190] */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+      margin-bottom: 12px;
+    }
+
+    /* Field groups with hover lift [web:187][web:191] */
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: transform 0.2s ease;
+    }
+
+    .field:hover {
+      transform: translateY(-2px);
+    }
+
+    label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      letter-spacing: 0.3px;
+      transition: color 0.3s ease;
+    }
+
+    .field:focus-within label {
+      color: var(--accent-cyan);
+    }
+
+    .hint {
+      font-weight: 400;
+      font-size: 0.8rem;
+      color: var(--text-hint);
+      font-style: italic;
+    }
+
+    /* Animated input focus states [web:189][web:193][web:201] */
+    input, select {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      font-family: 'Courier New', monospace;
+      outline: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Smooth focus animation with glow [web:193][web:199] */
+    input:focus, select:focus {
+      background: var(--input-focus);
+      border-color: var(--accent-cyan);
+      box-shadow: 
+        0 0 0 3px rgba(79, 195, 247, 0.15),
+        0 0 20px rgba(79, 195, 247, 0.2);
+      transform: scale(1.01);
+    }
+
+    input:hover:not(:focus), select:hover:not(:focus) {
+      border-color: var(--text-hint);
+      background: rgba(42, 54, 73, 0.8);
+    }
+
+    input:valid {
+      border-color: var(--border);
+    }
+
+    input:invalid:not(:placeholder-shown) {
+      border-color: var(--warning);
+      animation: shake 0.3s ease;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+
+    select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a8b8d8' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 32px;
+    }
+
+    /* Action button with gradient shift animation [web:182][web:190] */
+    .actions {
+      margin-top: 32px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      animation: fadeIn 1s ease-out 0.7s both;
+    }
+
+    button {
+      flex: 1;
+      padding: 14px 24px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+      background-size: 200% 200%;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 16px rgba(41, 121, 255, 0.3);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    button::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent, rgba(255,255,255,0.1), transparent);
+      transform: translateX(-100%);
+      transition: transform 0.6s ease;
+    }
+
+    button:hover::before {
+      transform: translateX(100%);
+    }
+
+    button:hover {
+      box-shadow: 
+        0 6px 24px rgba(41, 121, 255, 0.45),
+        0 0 30px rgba(79, 195, 247, 0.3);
+      transform: translateY(-2px);
+      background-position: 100% 0;
+    }
+
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(41, 121, 255, 0.4);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Animated loading spinner [web:182][web:190] */
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+    }
+
+    .loading.show {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent-cyan);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Result card with scale-in animation [web:184][web:185] */
+    #result {
+      display: none;
+      margin-top: 24px;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 1.05rem;
+      border: 1px solid var(--border);
+    }
+
+    #result.show {
+      display: block;
+      animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes scaleIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    #result h3 {
+      font-size: 1.4rem;
+      margin-bottom: 8px;
+      animation: bounce 0.6s ease 0.2s;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .success {
+      background: rgba(76, 175, 80, 0.15);
+      border-color: var(--success);
+      color: var(--success);
+    }
+
+    .error {
+      background: rgba(255, 82, 82, 0.15);
+      border-color: var(--warning);
+      color: var(--warning);
+    }
+
+    /* Info badge with subtle glow pulse [web:182][web:190] */
+    .info-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      background: rgba(79, 195, 247, 0.15);
+      border: 1px solid rgba(79, 195, 247, 0.3);
+      border-radius: 12px;
+      font-size: 0.75rem;
+      color: var(--accent-cyan);
+      font-weight: 500;
+      animation: glow 2s ease-in-out infinite;
+    }
+
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 5px rgba(79, 195, 247, 0.3); }
+      50% { box-shadow: 0 0 15px rgba(79, 195, 247, 0.5); }
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+    }
+
+    /* Reduce motion for accessibility */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1><span class="logo">🪐</span> Exoplanet Classification System</h1>
+        <p class="subtitle">NASA Kepler Mission Data Analysis Tool</p>
+      </div>
+      <span class="info-badge">v2.1 DR25</span>
+    </div>
+
+    <form id="predict-form">
+      <div class="section">
+        <div class="section-header">
+          <span class="section-icon">📊</span>
+          Disposition & Quality Metrics
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="koi_pdisposition">Preliminary Disposition</label>
+            <select id="koi_pdisposition" required>
+              <option value="CANDIDATE" selected>CANDIDATE</option>
+              <option value="FALSE POSITIVE">FALSE POSITIVE</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="koi_score">Disposition Score <span class="hint">(0–1)</span></label>
+            <input type="number" step="0.001" id="koi_score" value="0.872" min="0" max="1" required />
+          </div>
+          <div class="field">
+            <label for="koi_model_snr">Signal-to-Noise Ratio</label>
+            <input type="number" step="0.1" id="koi_model_snr" value="26.3" required />
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <span class="section-icon">🚩</span>
+          False Positive Flags
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="koi_fpflag_nt">Not Transit-Like <span class="hint">(0 or 1)</span></label>
+            <input type="number" id="koi_fpflag_nt" min="0" max="1" value="0" required />
+          </div>
+          <div class="field">
+            <label for="koi_fpflag_ss">Stellar Eclipse <span class="hint">(0 or 1)</span></label>
+            <input type="number" id="koi_fpflag_ss" min="0" max="1" value="0" required />
+          </div>
+          <div class="field">
+            <label for="koi_fpflag_co">Centroid Offset <span class="hint">(0 or 1)</span></label>
+            <input type="number" id="koi_fpflag_co" min="0" max="1" value="0" required />
+          </div>
+          <div class="field">
+            <label for="koi_fpflag_ec">Contamination <span class="hint">(0 or 1)</span></label>
+            <input type="number" id="koi_fpflag_ec" min="0" max="1" value="0" required />
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <span class="section-icon">🌍</span>
+          Transit Parameters
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="koi_period">Orbital Period <span class="hint">(days)</span></label>
+            <input type="number" step="0.0001" id="koi_period" value="13.825" required />
+          </div>
+          <div class="field">
+            <label for="koi_time0bk">Transit Epoch <span class="hint">(BKJD)</span></label>
+            <input type="number" step="0.0001" id="koi_time0bk" value="131.512" required />
+          </div>
+          <div class="field">
+            <label for="koi_impact">Impact Parameter <span class="hint">(b)</span></label>
+            <input type="number" step="0.001" id="koi_impact" value="0.146" required />
+          </div>
+          <div class="field">
+            <label for="koi_duration">Transit Duration <span class="hint">(hours)</span></label>
+            <input type="number" step="0.001" id="koi_duration" value="2.675" required />
+          </div>
+          <div class="field">
+            <label for="koi_depth">Transit Depth <span class="hint">(ppm)</span></label>
+            <input type="number" step="1" id="koi_depth" value="489" required />
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <span class="section-icon">🪐</span>
+          Planetary Properties
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="koi_prad">Planet Radius <span class="hint">(Earth radii)</span></label>
+            <input type="number" step="0.01" id="koi_prad" value="1.88" required />
+          </div>
+          <div class="field">
+            <label for="koi_teq">Equilibrium Temp <span class="hint">(K)</span></label>
+            <input type="number" step="1" id="koi_teq" value="793" required />
+          </div>
+          <div class="field">
+            <label for="koi_insol">Insolation Flux <span class="hint">(Earth flux)</span></label>
+            <input type="number" step="0.01" id="koi_insol" value="36.41" required />
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <span class="section-icon">⭐</span>
+          Stellar Properties
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="koi_steff">Stellar Effective Temp <span class="hint">(K)</span></label>
+            <input type="number" step="1" id="koi_steff" value="5780" required />
+          </div>
+          <div class="field">
+            <label for="koi_slogg">Surface Gravity <span class="hint">(log g)</span></label>
+            <input type="number" step="0.01" id="koi_slogg" value="4.438" required />
+          </div>
+          <div class="field">
+            <label for="koi_srad">Stellar Radius <span class="hint">(Solar radii)</span></label>
+            <input type="number" step="0.01" id="koi_srad" value="0.927" required />
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <span class="section-icon">📍</span>
+          Position & Catalog Data
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="ra">Right Ascension <span class="hint">(degrees)</span></label>
+            <input type="number" step="0.0001" id="ra" value="291.93423" required />
+          </div>
+          <div class="field">
+            <label for="dec">Declination <span class="hint">(degrees)</span></label>
+            <input type="number" step="0.0001" id="dec" value="48.14109" required />
+          </div>
+          <div class="field">
+            <label for="koi_kepmag">Kepler Magnitude</label>
+            <input type="number" step="0.01" id="koi_kepmag" value="14.75" required />
+          </div>
+          <div class="field">
+            <label for="koi_tce_plnt_num">TCE Planet Number</label>
+            <input type="number" id="koi_tce_plnt_num" value="1" required />
+          </div>
+          <div class="field">
+            <label for="koi_tce_delivname">TCE Delivery</label>
+            <select id="koi_tce_delivname" required>
+              <option value="q1_q16_tce" selected>q1_q16_tce</option>
+              <option value="q1_q12_tce">q1_q12_tce</option>
+              <option value="q1_q17_dr24_tce">q1_q17_dr24_tce</option>
+              <option value="q1_q17_dr25_tce">q1_q17_dr25_tce</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="submit">🔍 Run Classification</button>
+      </div>
+
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <span>Analyzing transit data...</span>
+      </div>
+
+      <div id="result"></div>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById("predict-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      document.getElementById("loading").classList.add("show");
+      document.getElementById("result").classList.remove("show");
+
+      const data = {
+        koi_pdisposition: document.getElementById("koi_pdisposition").value,
+        koi_score: parseFloat(document.getElementById("koi_score").value),
+        koi_fpflag_nt: parseInt(document.getElementById("koi_fpflag_nt").value),
+        koi_fpflag_ss: parseInt(document.getElementById("koi_fpflag_ss").value),
+        koi_fpflag_co: parseInt(document.getElementById("koi_fpflag_co").value),
+        koi_fpflag_ec: parseInt(document.getElementById("koi_fpflag_ec").value),
+        koi_period: parseFloat(document.getElementById("koi_period").value),
+        koi_time0bk: parseFloat(document.getElementById("koi_time0bk").value),
+        koi_impact: parseFloat(document.getElementById("koi_impact").value),
+        koi_duration: parseFloat(document.getElementById("koi_duration").value),
+        koi_depth: parseFloat(document.getElementById("koi_depth").value),
+        koi_prad: parseFloat(document.getElementById("koi_prad").value),
+        koi_teq: parseFloat(document.getElementById("koi_teq").value),
+        koi_insol: parseFloat(document.getElementById("koi_insol").value),
+        koi_model_snr: parseFloat(document.getElementById("koi_model_snr").value),
+        koi_tce_plnt_num: parseInt(document.getElementById("koi_tce_plnt_num").value),
+        koi_tce_delivname: document.getElementById("koi_tce_delivname").value,
+        koi_steff: parseFloat(document.getElementById("koi_steff").value),
+        koi_slogg: parseFloat(document.getElementById("koi_slogg").value),
+        koi_srad: parseFloat(document.getElementById("koi_srad").value),
+        ra: parseFloat(document.getElementById("ra").value),
+        dec: parseFloat(document.getElementById("dec").value),
+        koi_kepmag: parseFloat(document.getElementById("koi_kepmag").value)
+      };
+
+      try {
+        const res = await fetch("/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        const result = await res.json();
+
+        document.getElementById("loading").classList.remove("show");
+        const resultDiv = document.getElementById("result");
+
+        if (result.error) {
+          resultDiv.className = "error show";
+          resultDiv.innerHTML = `<h3>⚠️ Error</h3><p>${result.error}</p>`;
+        } else {
+          const label = String(result.koi_disposition || "").toUpperCase();
+          let icon = "❓";
+          if (label.includes("CONFIRMED")) icon = "✅";
+          else if (label.includes("CANDIDATE")) icon = "🌟";
+          else if (label.includes("FALSE")) icon = "❌";
+
+          resultDiv.className = "success show";
+          resultDiv.innerHTML = `<h3>${icon} Classification Result</h3><p><strong>${label}</strong></p>`;
+        }
+        resultDiv.classList.add("show");
+      } catch (error) {
+        document.getElementById("loading").classList.remove("show");
+        const resultDiv = document.getElementById("result");
+        resultDiv.className = "error show";
+        resultDiv.innerHTML = `<h3>⚠️ Network Error</h3><p>${error.message}</p>`;
+      }
+    });
+  </script>
+</body>
+</html>
